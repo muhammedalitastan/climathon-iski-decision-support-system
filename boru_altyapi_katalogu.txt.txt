@@ -1,0 +1,25 @@
+================================================================================
+İSKİ İSTANBUL SU VE KANALİZASYON İDARESİ - TEKNİK ALTYAPI KATALOĞU
+BÖLGE: KADIKÖY - MODA BESLEME HATTI (HAT KODU: KD-MODA-402)
+================================================================================
+
+[SEGMENT KD-402-A]
+- Konum / Sokak: Moda Caddesi - Caferağa Mahallesi Kesişimi
+- Boru İmalat Yılı: 1988
+- Malzeme Tipi: Döküm Demir (Cast Iron - Tip B)
+- Nominal Çap (DN): 300 mm
+- İşletme Basıncı (P_normal): 4.2 bar
+- Normal Debi Aralığı: 60 - 85 m³/h
+- Bağlı Vana Kodu: VANA-12 (Manuel / Dişli Redüktörlü)
+- Kritik Müdahale Protokolü: Boru malzemesi 1988 yapımı gevrek döküm demir olduğundan, yüksek basınç şoklarını (koç darbesi / water hammer) önlemek için VANA-12 ani kapatılmamalıdır. Vana kademeli olarak (%20 adımlarla, her adımda 5 dakika beklenerek) kapatılmalıdır.
+- Geçmiş Bakım Kaydı: En son 2012 yılında conta yenilemesi yapıldı. Eskime faktörü yüksek.
+
+[SEGMENT KD-402-B]
+- Konum / Sokak: Mühürdar Caddesi
+- Boru İmalat Yılı: 2018
+- Malzeme Tipi: HDPE (Yüksek Yoğunluklu Polietilen)
+- Nominal Çap (DN): 250 mm
+- İşletme Basıncı (P_normal): 4.5 bar
+- Normal Debi Aralığı: 40 - 60 m³/h
+- Bağlı Vana Kodu: VANA-15 (Pnömatik Otonom Vana)
+- Kritik Müdahale Protokolü: Esnek boru yapısı. VANA-15 doğrudan acil kapatma protokolüne uygundur.
