@@ -1,0 +1,64 @@
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Android
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/**/GeneratedPluginRegistrant.java
+android/key.properties
+*.keystore
+*.jks
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/profile
+ios/xcuserdata
+ios/.generated/
+ios/DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Uploads
+backend/uploads/
+*.jpg
+*.jpeg
+*.png
+*.gif
+
+# Logs
+*.log
+backend/audit_logs.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# APK
+*.apk
