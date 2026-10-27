@@ -4,7 +4,7 @@
  * IP bağımsız çalışır, header üzerinden doğrulama yapar
  */
 
-const API_KEY = process.env.MOBILE_API_KEY || "iski_field_mobile_secret_2026";
+const API_KEY = process.env.MOBILE_API_KEY || process.env.API_KEY || "";
 
 /**
  * API Key doğrulama middleware'i

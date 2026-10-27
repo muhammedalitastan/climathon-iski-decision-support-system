@@ -12,6 +12,7 @@ const fs = require('fs');
 const rateLimit = require('express-rate-limit');
 const os = require('os');
 const ip = require('ip');
+const QRCode = require('qrcode');
 
 // Auth middleware
 const { validateApiKey, optionalApiKey } = require('./middleware/auth');
@@ -104,15 +105,16 @@ const upload = multer({
         fileSize: 10 * 1024 * 1024 // 10 MB limit
     },
     fileFilter: (req, file, cb) => {
-        // Sadece resim dosyalarına izin ver
-        const allowedTypes = /jpeg|jpg|png|gif/;
+        // Resim dosyalarına izin ver (dosya uzantısına göre)
+        const allowedTypes = /jpeg|jpg|png|gif|webp/;
         const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
         
-        if (extname && mimetype) {
+        if (extname) {
+            console.log(`[UPLOAD] Dosya kabul edildi: ${file.originalname}, MIME type: ${file.mimetype}`);
             return cb(null, true);
         }
-        cb(new Error('Sadece resim dosyaları (jpeg, jpg, png, gif) yüklenebilir.'));
+        console.log(`[UPLOAD] Dosya reddedildi: ${file.originalname}, MIME type: ${file.mimetype}`);
+        cb(new Error('Sadece resim dosyaları (jpeg, jpg, png, gif, webp) yüklenebilir.'));
     }
 });
 
@@ -379,10 +381,10 @@ app.get('/api/system/network-info', optionalApiKey, (req, res) => {
         const localIP = ip.address();
         const port = process.env.PORT || 5000;
         const serverUrl = `http://${localIP}:${port}`;
-        
-        // API key (environment variable veya default)
-        const apiKey = process.env.MOBILE_API_KEY || 'iski_field_mobile_secret_2026';
-        
+
+        // API key (environment variable kullanın, production için zorunlu)
+        const apiKey = process.env.MOBILE_API_KEY || process.env.API_KEY || '';
+
         res.json({
             success: true,
             server_url: serverUrl,
@@ -395,6 +397,53 @@ app.get('/api/system/network-info', optionalApiKey, (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/system/qr-code
+ * Dinamik QR kod oluşturur ve PNG olarak döndürür
+ * Herhangi bir cihazdan taratılabilir
+ */
+app.get('/api/system/qr-code', optionalApiKey, async (req, res) => {
+    try {
+        // Yerel IP adresini al
+        const localIP = ip.address();
+        const port = process.env.PORT || 5000;
+        const serverUrl = `http://${localIP}:${port}`;
+
+        // API key (environment variable kullanın, production için zorunlu)
+        const apiKey = process.env.MOBILE_API_KEY || process.env.API_KEY || '';
+
+        // QR kod verisi (JSON formatında)
+        const qrData = JSON.stringify({
+            server_url: serverUrl,
+            api_key: apiKey
+        });
+
+        // QR kod oluştur (PNG formatında)
+        const qrCodeBuffer = await QRCode.toBuffer(qrData, {
+            width: 300,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            },
+            errorCorrectionLevel: 'H' // Yüksek hata düzeltme
+        });
+
+        // PNG olarak gönder
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Disposition', 'inline; filename=connection-qr.png');
+        res.send(qrCodeBuffer);
+
+        console.log('✓ QR kod oluşturuldu:', serverUrl);
+    } catch (error) {
+        console.error('QR kod oluşturma hatası:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'QR kod oluşturma hatası'
         });
     }
 });

@@ -9,7 +9,7 @@ class ApiService {
   
   late Dio _dio;
   String _serverUrl = 'http://localhost:5000';
-  String _apiKey = 'iski_field_mobile_secret_2026';
+  String _apiKey = '';
 
   // Singleton pattern
   static ApiService get instance {
@@ -27,7 +27,7 @@ class ApiService {
   Future<void> _initializeFromPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     _serverUrl = prefs.getString('server_url') ?? 'http://localhost:5000';
-    _apiKey = prefs.getString('api_key') ?? 'iski_field_mobile_secret_2026';
+    _apiKey = prefs.getString('api_key') ?? '';
     _configureDio();
   }
 

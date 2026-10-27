@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
 import 'services/api_service.dart';
 import 'views/qr_scanner_screen.dart';
 
@@ -52,19 +53,21 @@ class _TechnicianDashboardState extends State<TechnicianDashboard> {
   Map<String, dynamic>? incidentData;
   bool isLoading = false;
   bool isSubmitting = false;
+  bool _isConnected = false; // Bağlantı durumu
   File? selectedImage;
   final TextEditingController _noteController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
-  
+
   // Checklist state
   final List<bool> _checklistStates = List.generate(5, (index) => false);
-  
+
   // Polling timer
   Timer? _pollingTimer;
   
   @override
   void initState() {
     super.initState();
+    _checkSavedConnection(); // Kayıtlı bağlantıyı kontrol et
     _fetchIncidentData();
     // 30 saniyede bir otomatik polling
     _startPolling();
@@ -80,7 +83,38 @@ class _TechnicianDashboardState extends State<TechnicianDashboard> {
   void _startPolling() {
     _pollingTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _fetchIncidentData();
+      // Her polling'de bağlantı durumunu da kontrol et
+      _checkSavedConnection();
     });
+  }
+
+  Future<void> _checkSavedConnection() async {
+    // Kayıtlı URL var mı kontrol et
+    try {
+      final baseUrl = await ApiService.getBaseUrl();
+      print('[DEBUG] Checking saved connection. BaseURL: $baseUrl');
+
+      if (baseUrl.isNotEmpty) {
+        // URL kayıtlı, bağlantıyı test et
+        final isConnected = await ApiService.checkConnection();
+        print('[DEBUG] Connection check result: $isConnected');
+        setState(() {
+          _isConnected = isConnected;
+        });
+      } else {
+        // URL kayıtlı değil
+        print('[DEBUG] No saved URL found');
+        setState(() {
+          _isConnected = false;
+        });
+      }
+    } catch (e) {
+      // URL kayıtlı değil veya bağlantı hatası
+      print('[DEBUG] Connection check error: $e');
+      setState(() {
+        _isConnected = false;
+      });
+    }
   }
 
   Future<void> _fetchIncidentData() async {
@@ -93,12 +127,14 @@ class _TechnicianDashboardState extends State<TechnicianDashboard> {
       setState(() {
         incidentData = data;
         isLoading = false;
+        _isConnected = true; // Veri çekme başarılı, bağlantı var
       });
     } catch (e) {
       print('[ERROR] Fetch incident: $e');
       setState(() {
         incidentData = null;
         isLoading = false;
+        _isConnected = false; // Hata var, bağlantı kopuk olabilir
       });
     }
   }
@@ -111,8 +147,14 @@ class _TechnicianDashboardState extends State<TechnicianDashboard> {
       );
 
       if (image != null) {
+        // Fotoğrafı kalıcı dizine kopyala
+        final Directory appDocDir = await getApplicationDocumentsDirectory();
+        final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final File savedImage = File(image.path);
+        final File permanentImage = await savedImage.copy('${appDocDir.path}/$fileName');
+
         setState(() {
-          selectedImage = File(image.path);
+          selectedImage = permanentImage;
         });
       }
     } catch (e) {
@@ -168,6 +210,21 @@ class _TechnicianDashboardState extends State<TechnicianDashboard> {
           backgroundColor: Colors.orange,
         ),
       );
+      return;
+    }
+
+    // Dosya varlığını kontrol et
+    if (!await selectedImage!.exists()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Fotoğraf dosyası bulunamadı. Lütfen fotoğrafı yeniden çekin.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      setState(() {
+        selectedImage = null;
+      });
       return;
     }
 
@@ -331,6 +388,9 @@ class _TechnicianDashboardState extends State<TechnicianDashboard> {
                         ),
                       );
                       if (result == true) {
+                        setState(() {
+                          _isConnected = true; // Bağlantı başarılı
+                        });
                         _fetchIncidentData();
                       }
                     },
@@ -348,24 +408,31 @@ class _TechnicianDashboardState extends State<TechnicianDashboard> {
           ),
           const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF064E3B),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF10B981)),
+              color: _isConnected ? const Color(0xFF064E3B) : const Color(0xFF7F1D1D),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _isConnected ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                width: 2,
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.circle, color: Colors.green, size: 8),
-                const SizedBox(width: 8),
+                Icon(
+                  _isConnected ? Icons.check_circle : Icons.error,
+                  color: _isConnected ? Colors.green : Colors.red,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
                 Flexible(
                   child: Text(
-                    'Yer İstasyonu Senkronize',
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                    _isConnected ? '✓ Yer İstasyonu Bağlandı' : '✗ Bağlantı Bekleniyor',
+                    style: TextStyle(
+                      color: _isConnected ? Colors.green : Colors.red,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -454,6 +521,62 @@ class _TechnicianDashboardState extends State<TechnicianDashboard> {
               color: Colors.white,
             ),
           ),
+          const SizedBox(height: 8),
+          
+          // Öncelik
+          Row(
+            children: [
+              const Text(
+                '⚡ Öncelik: ',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getPriorityColor(incidentData?['priority']),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  _getPriorityText(incidentData?['priority']),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          
+          // Açıklama
+          if (incidentData?['description'] != null && incidentData?['description'].toString().isNotEmpty == true)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '📝 Açıklama',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  incidentData?['description'] ?? '',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
           const SizedBox(height: 12),
           
           // Navigasyon Butonu
@@ -482,18 +605,18 @@ class _TechnicianDashboardState extends State<TechnicianDashboard> {
           ),
           const SizedBox(height: 8),
           
-          // Checklist Items
+          // Checklist Items - AI Reçetesinden Dinamik
           _buildChecklistItem(
             0,
-            'Boru Malzemesi: 1988 Döküm Demir (Gevrek Yapı - Koç Darbesi Riski Yüksek)',
+            'Boru Malzemesi: ${_getBoruKunyesi()}',
           ),
           _buildChecklistItem(
             1,
-            'Adım 1: Moda Caddesi kesişimindeki VANA-12 konumuna ulaşın.',
+            'Adım 1: ${_getSahaTalimati()}',
           ),
           _buildChecklistItem(
             2,
-            'Adım 2 (Kritik YZ Talimatı): VANA-12\'yi %20 kademeli adımlarla (her adımda 5 dk bekleyerek) kapatın. Ani kapatma yapmayın!',
+            'Adım 2 (Kritik YZ Talimatı): ${_getEylemRecetesi()}',
             isCritical: true,
           ),
         ],
@@ -726,5 +849,58 @@ class _TechnicianDashboardState extends State<TechnicianDashboard> {
         ],
       ),
     );
+  }
+
+  Color _getPriorityColor(String? priority) {
+    switch (priority?.toLowerCase()) {
+      case 'high':
+      case 'critical':
+        return const Color(0xFFEF4444);
+      case 'medium':
+        return const Color(0xFFF59E0B);
+      case 'low':
+        return const Color(0xFF10B981);
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+
+  String _getPriorityText(String? priority) {
+    switch (priority?.toLowerCase()) {
+      case 'high':
+        return 'YÜKSEK';
+      case 'critical':
+        return 'KRİTİK';
+      case 'medium':
+        return 'ORTA';
+      case 'low':
+        return 'DÜŞÜK';
+      default:
+        return 'BELİRSİZ';
+    }
+  }
+
+  String _getBoruKunyesi() {
+    final recipe = incidentData?['ai_recipe'];
+    if (recipe != null && recipe is Map) {
+      return recipe['boru_kunyesi'] ?? 'Bilinmiyor';
+    }
+    return 'Bilinmiyor';
+  }
+
+  String _getSahaTalimati() {
+    final recipe = incidentData?['ai_recipe'];
+    if (recipe != null && recipe is Map) {
+      return recipe['saha_talimati'] ?? 'Talimat bulunamadı';
+    }
+    return 'Talimat bulunamadı';
+  }
+
+  String _getEylemRecetesi() {
+    final recipe = incidentData?['ai_recipe'];
+    if (recipe != null && recipe is Map) {
+      return recipe['eylem_recetesi'] ?? 'Reçete bulunamadı';
+    }
+    return 'Reçete bulunamadı';
   }
 }

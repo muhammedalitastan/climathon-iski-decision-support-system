@@ -252,7 +252,7 @@ npm start
 İSKİ Saha Tekniker Backend Server
 ==================================================
 Server running on http://localhost:5000
-Local Network URL: http://192.168.1.100:5000
+Local Network URL: http://192.168.1.XXX:5000
 ==================================================
 API Endpoints:
   GET  /api/scada/analysis  - Aktif iş emrini getir
@@ -324,14 +324,14 @@ API base URL ve API key'i düzenleyin:
 
 ```dart
 class ApiService {
-  static String baseUrl = 'http://192.168.1.100:5000';  // Yer istasyonu IP adresi
-  static String apiKey = 'iski_field_mobile_secret_2026';  // API key
+  static String baseUrl = '';  // QR kod ile otomatik doldurulur
+  static String apiKey = '';  // API key (QR kod ile otomatik doldurulur)
 
   // ... diğer kodlar
 }
 ```
 
-**Not:** Production'da bu değerleri environment variable'dan okuyun.
+**Not:** Base URL ve API key QR kod ile otomatik doldurulur. Manuel olarak girmeyin.
 
 ---
 
@@ -355,14 +355,14 @@ const API_KEY = process.env.API_KEY || '';
 
 **lib/services/api_service.dart:**
 ```dart
-static String baseUrl = 'http://192.168.1.100:5000';
-static String apiKey = 'iski_field_mobile_secret_2026';
+static String baseUrl = '';  // QR kod ile otomatik doldurulur
+static String apiKey = '';  // QR kod ile otomatik doldurulur
 ```
 
 **Network Configuration:**
-- Yer istasyonu ve mobil uygulama aynı Wi-Fi ağındaysa: IP adresi kullanın
-- Yer istasyonu internete bağlıysa: Public IP veya domain kullanın
-- Local development: `http://localhost:5000` (emulator için)
+- Base URL ve API key QR kod ile otomatik doldurulur
+- Manuel olarak girmeyin
+- Backend çalıştırın ve QR kodu taratın
 
 ---
 
@@ -449,7 +449,7 @@ QR Code Data URL (Base64):
 data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
 
 QR Code JSON Data:
-{"server_url":"http://192.168.1.100:5000"}
+{"server_url":"http://192.168.1.XXX:5000"}
 ==================================================
 💡 İpucu: Bu QR kodu mobil uygulama ile taratın
 💡 Veya: http://localhost:5000/api/qr adresinden QR kodu görüntüleyin

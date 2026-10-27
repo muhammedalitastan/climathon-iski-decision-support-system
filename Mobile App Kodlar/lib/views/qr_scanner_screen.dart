@@ -48,15 +48,17 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   Future<void> _processScannedCode(String code) async {
     try {
-      // JSON formatında beklenen: {"server_url": "http://192.168.1.105:5000"}
-      // Veya doğrudan URL: "http://192.168.1.105:5000"
-      
+      // JSON formatında beklenen: {"server_url": "http://192.168.1.XXX:5000", "api_key": "key"}
+      // Veya doğrudan URL: "http://192.168.1.XXX:5000"
+
       String serverUrl = '';
-      
+      String apiKey = '';
+
       if (code.startsWith('{')) {
         // JSON format
         final jsonData = jsonDecode(code);
         serverUrl = jsonData['server_url']?.toString() ?? '';
+        apiKey = jsonData['api_key']?.toString() ?? '';
       } else {
         // Doğrudan URL
         serverUrl = code;
@@ -75,6 +77,12 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       // URL'i kaydet
       await ApiService.setBaseUrl(serverUrl);
       ApiService.clearCache();
+
+      // API key'i kaydet (varsa)
+      if (apiKey.isNotEmpty) {
+        await ApiService.setApiKey(apiKey);
+        print('[QR] API Key saved');
+      }
 
       // Device ID oluştur ve kaydet
       final deviceId = await ApiService.getDeviceId();

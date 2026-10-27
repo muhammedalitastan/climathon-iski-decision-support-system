@@ -224,7 +224,7 @@ notepad .env
 **.env dosyası içeriği:**
 ```env
 PORT=5000
-MOBILE_API_KEY=iski_field_mobile_secret_2026
+MOBILE_API_KEY=your_secure_api_key_here
 MONGODB_URL=mongodb://localhost:27017/iski_audit
 ```
 
@@ -321,8 +321,8 @@ copy .env.example .env
 
 **.env dosyasını düzenleyin:**
 ```env
-API_BASE_URL=http://192.168.1.100:5000
-API_KEY=iski_field_mobile_secret_2026
+API_BASE_URL=http://192.168.1.XXX:5000
+API_KEY=your_secure_api_key_here
 ```
 
 **Not:** `API_BASE_URL`'yi yer istasyonunuzun IP adresi ile değiştirin.
@@ -514,7 +514,7 @@ npm run dev
   VITE v5.0.8  ready in 1234 ms
 
   ➜  Local:   http://localhost:3000/
-  ➜  Network: http://192.168.1.100:3000/
+  ➜  Network: http://192.168.1.XXX:3000/
 ```
 
 **Terminal 3 - Ollama (Eğer otomatik başlamadıysa):**
@@ -673,8 +673,8 @@ GET /api/system/network-info
 ```json
 {
   "success": true,
-  "server_url": "http://192.168.1.100:5000",
-  "api_key": "iski_field_mobile_secret_2026",
+  "server_url": "http://192.168.1.XXX:5000",
+  "api_key": "your_secure_api_key_here",
   "hostname": "DESKTOP-XXXX",
   "timestamp": "2024-01-15T10:00:00Z"
 }
@@ -887,14 +887,14 @@ flutter build ios --release
 **Yer İstasyonu Backend (.env):**
 ```env
 PORT=5000
-MOBILE_API_KEY=iski_field_mobile_secret_2026
+MOBILE_API_KEY=your_secure_api_key_here
 MONGODB_URL=mongodb://localhost:27017/iski_audit
 ```
 
 **Mobile App (.env):**
 ```env
-API_BASE_URL=http://192.168.1.100:5000
-API_KEY=iski_field_mobile_secret_2026
+API_BASE_URL=http://192.168.1.XXX:5000
+API_KEY=your_secure_api_key_here
 ```
 
 ### Security Notes

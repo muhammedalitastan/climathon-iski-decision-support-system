@@ -46,12 +46,20 @@ function App() {
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
   const [analysisProgress, setAnalysisProgress] = useState({ step: '', progress: 0 });
   
+  // Fotoğraf pagination
+  const [photosPerPage, setPhotosPerPage] = useState(6);
+  const [showMorePhotos, setShowMorePhotos] = useState(false);
+  
   // Senaryo ve dosya yükleme state'leri
   const [selectedScenario, setSelectedScenario] = useState('moda');
   const [scadaFile, setScadaFile] = useState(null);
   const [catalogFile, setCatalogFile] = useState(null);
   const [uploadingScada, setUploadingScada] = useState(false);
   const [uploadingCatalog, setUploadingCatalog] = useState(false);
+  
+  // İş emri oluşturma state'leri
+  const [incidentPriority, setIncidentPriority] = useState('medium');
+  const [incidentDescription, setIncidentDescription] = useState('');
   
   // Senaryo konfigürasyonları (backend'den dinamik yüklenecek)
   const [scenarios, setScenarios] = useState([
@@ -177,13 +185,16 @@ function App() {
         scenario_id: selectedScenarioData.id,
         segment_id: selectedScenarioData.segment,
         location_name: selectedScenarioData.name,
-        priority: 'medium',
-        description: 'Anomali tespit edildi, saha müdahalesi gerekli'
+        priority: incidentPriority,
+        description: incidentDescription || 'Anomali tespit edildi, saha müdahalesi gerekli'
       });
 
       if (response.data.success) {
         alert(`İş emri oluşturuldu: ${response.data.incident.incident_id}`);
         fetchAuditLogs();
+        // Formu temizle
+        setIncidentPriority('medium');
+        setIncidentDescription('');
       }
     } catch (err) {
       alert('İş emri oluşturma hatası: ' + err.message);
@@ -203,9 +214,9 @@ function App() {
 
     try {
       const response = await api.post('/api/upload/scada', formData, {
-        headers: { 
+        headers: {
           'Content-Type': 'multipart/form-data',
-          'X-API-KEY': 'iski_field_mobile_secret_2026'
+          'X-API-KEY': import.meta.env.VITE_API_KEY || ''
         }
       });
 
@@ -235,9 +246,9 @@ function App() {
 
     try {
       const response = await api.post('/api/upload/catalog', formData, {
-        headers: { 
+        headers: {
           'Content-Type': 'multipart/form-data',
-          'X-API-KEY': 'iski_field_mobile_secret_2026'
+          'X-API-KEY': import.meta.env.VITE_API_KEY || ''
         }
       });
 
@@ -305,7 +316,7 @@ function App() {
                 className="flex items-center gap-2 bg-gradient-to-r from-iski-accent to-iski-warning text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
               >
                 <Smartphone className="w-4 h-4" />
-                <span className="text-sm font-semibold">Mobil Cihaz Eşleştir</span>
+                <span className="text-sm font-semibold">📱 QR Kod ile Bağlan</span>
               </button>
               
               <button
@@ -673,9 +684,13 @@ function App() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Öncelik
                     </label>
-                    <select className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-iski-accent focus:border-transparent">
+                    <select 
+                      value={incidentPriority}
+                      onChange={(e) => setIncidentPriority(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-iski-accent focus:border-transparent"
+                    >
                       <option value="low">Düşük</option>
-                      <option value="medium" selected>Orta</option>
+                      <option value="medium">Orta</option>
                       <option value="high">Yüksek</option>
                       <option value="critical">Kritik</option>
                     </select>
@@ -686,6 +701,8 @@ function App() {
                       Açıklama
                     </label>
                     <textarea
+                      value={incidentDescription}
+                      onChange={(e) => setIncidentDescription(e.target.value)}
                       className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-iski-accent focus:border-transparent"
                       rows="3"
                       placeholder="İş emri detaylarını girin..."
@@ -722,7 +739,7 @@ function App() {
                         <p className="text-sm">Henüz fotoğraf yüklenmedi</p>
                       </div>
                     ) : (
-                      uploadedPhotos.map((photo, index) => (
+                      uploadedPhotos.slice(0, showMorePhotos ? uploadedPhotos.length : photosPerPage).map((photo, index) => (
                         <div key={index} className="relative group">
                           <img
                             src={`http://localhost:5000${photo.path}`}
@@ -738,6 +755,17 @@ function App() {
                       ))
                     )}
                   </div>
+                  
+                  {uploadedPhotos.length > photosPerPage && (
+                    <button
+                      onClick={() => setShowMorePhotos(!showMorePhotos)}
+                      className="mt-4 w-full py-2 text-sm font-semibold text-purple-600 hover:text-purple-800 transition-colors border border-purple-200 rounded-lg hover:bg-purple-50"
+                    >
+                      {showMorePhotos 
+                        ? `Daha Az Göster (${uploadedPhotos.length} fotoğraf)` 
+                        : `Daha Fazla Göster (${uploadedPhotos.length - photosPerPage} fotoğraf daha)`}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -756,19 +784,34 @@ function App() {
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Olay ID</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Konum</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Segment</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Öncelik</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Tarih</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Durum</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Teknisyen Notu</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Fotoğraf</th>
                   </tr>
                 </thead>
                 <tbody>
                   {auditLogs.map((log) => (
                     <tr key={log.incident_id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4 font-mono text-xs">{log.incident_id}</td>
-                      <td className="py-3 px-4 font-semibold text-iski-blue">{log.segment_id}</td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {new Date(log.timestamp).toLocaleString('tr-TR')}
+                      <td className="py-3 px-4 font-semibold text-iski-blue text-xs">{log.location_name || '-'}</td>
+                      <td className="py-3 px-4 font-semibold text-gray-700 text-xs">{log.segment_id}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          log.priority === 'high' || log.priority === 'critical'
+                            ? 'bg-red-100 text-red-700'
+                            : log.priority === 'medium'
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {log.priority === 'high' ? 'Yüksek' : log.priority === 'critical' ? 'Kritik' : log.priority === 'medium' ? 'Orta' : 'Düşük'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-gray-600 text-xs">
+                        {new Date(log.timestamp || log.created_at).toLocaleString('tr-TR')}
                       </td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
@@ -781,6 +824,20 @@ function App() {
                       </td>
                       <td className="py-3 px-4 text-gray-600 text-xs max-w-xs truncate">
                         {log.technician_note || '-'}
+                      </td>
+                      <td className="py-3 px-4">
+                        {log.image_path || log.photo_path ? (
+                          <a
+                            href={`http://localhost:5000${log.image_path || log.photo_path}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 underline text-xs"
+                          >
+                            Görüntüle
+                          </a>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
                       </td>
                     </tr>
                   ))}

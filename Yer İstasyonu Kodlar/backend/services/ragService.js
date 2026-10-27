@@ -75,19 +75,43 @@ async function callOllamaLLM(systemPrompt, userPrompt) {
             model: OLLAMA_MODEL,
             prompt: userPrompt,
             system: systemPrompt,
-            stream: false,
+            stream: true,
             format: 'json'
         };
         
         const response = await axios.post(OLLAMA_API_URL, payload, {
-            timeout: 180000 // 3 dakika timeout
+            timeout: 180000, // 3 dakika timeout
+            responseType: 'stream'
         });
         
-        if (response.data && response.data.response) {
-            return response.data.response;
-        }
+        let fullResponse = '';
         
-        return null;
+        return new Promise((resolve, reject) => {
+            response.data.on('data', (chunk) => {
+                try {
+                    const lines = chunk.toString().split('\n').filter(line => line.trim());
+                    for (const line of lines) {
+                        const json = JSON.parse(line);
+                        if (json.response) {
+                            fullResponse += json.response;
+                        }
+                        if (json.done) {
+                            resolve(fullResponse);
+                        }
+                    }
+                } catch (e) {
+                    // Streaming chunk parse hatası - yoksay
+                }
+            });
+            
+            response.data.on('end', () => {
+                resolve(fullResponse);
+            });
+            
+            response.data.on('error', (err) => {
+                reject(err);
+            });
+        });
         
     } catch (error) {
         if (error.code === 'ECONNREFUSED') {
@@ -101,74 +125,6 @@ async function callOllamaLLM(systemPrompt, userPrompt) {
     }
 }
 
-/**
- * Fallback varsayılan reçete üretir
- * Ollama yanıt vermezse kullanılır
- * Senaryo bazlı dinamik reçete üretir
- * 
- * @param {Object} anomalyData - Anomali verileri
- * @returns {Object} Varsayılan JSON reçetesi
- */
-function generateFallbackRecipe(anomalyData) {
-    const segmentId = anomalyData.segment_id || 'Bilinmiyor';
-    const locationName = anomalyData.location_name || 'Bilinmiyor';
-    const riskScore = anomalyData.risk_skoru || 50;
-    const debiSapma = anomalyData.debi_sapma || 0;
-    const basincSapma = anomalyData.basinc_sapma || 0;
-    const debi = anomalyData.debi_m3h || 0;
-    const basinc = anomalyData.basinc_bar || 0;
-    const ortalamaDebi = anomalyData.ortalama_debi || 0;
-    const ortalamaBasinc = anomalyData.ortalama_basinc || 0;
-    
-    // Katalogdan segment bilgilerini al
-    const catalogContext = parsePipeCatalog(segmentId);
-    
-    // Katalogdan boru bilgilerini çıkar
-    let year = 'Bilinmiyor';
-    let material = 'Bilinmiyor';
-    let diameter = 'Bilinmiyor';
-    let vana = 'VANA-GENEL';
-    
-    const yearMatch = catalogContext.match(/İmalat \/ Döşeme Yılı:\s*(.+)/i);
-    const materialMatch = catalogContext.match(/Boru Malzemesi\s*:\s*(.+)/i);
-    const diameterMatch = catalogContext.match(/Boru Çapı \(DN\)\s*:\s*(.+)/i);
-    
-    if (yearMatch) year = yearMatch[1].trim();
-    if (materialMatch) material = materialMatch[1].trim();
-    if (diameterMatch) diameter = diameterMatch[1].trim();
-    
-    // Vana numarasını segment ID'den türet
-    const vanaNum = segmentId.split('-').pop() || '12';
-    vana = `VANA-${vanaNum}`;
-    
-    // Malzemeye göre gerekçe ve eylem
-    let reason = '';
-    let action = '';
-    
-    if (material.toLowerCase().includes('döküm') || material.toLowerCase().includes('cast iron')) {
-        reason = 'Boru döküm demir olduğundan kırılgan yapıdadır. Ani vana kapatması yüksek basınç şokuna (koç darbesine) ve borunun patlamasına yol açabilir.';
-        action = `${vana}'yi %20 kademeli adımlarla, her adımda en az 15 dakika bekleyerek kapatın. Ani kapatma yapmayın.`;
-    } else if (material.toLowerCase().includes('polietilen') || material.toLowerCase().includes('hd-pe')) {
-        reason = 'Boru HD-PE olduğundan esnek yapıdadır. Basınç şoklarına karşı dayanıklıdır ancak hızlı kapatma kaynaklı su çarpması riski vardır.';
-        action = `${vana}'i %30 kademeli adımlarla, her adımda 3 dakika bekleyerek kapatın. Esnek yapıya rağmen ani kapatma yapmayın.`;
-    } else if (material.toLowerCase().includes('çelik') || material.toLowerCase().includes('steel')) {
-        reason = 'Boru çelik olduğundan dayanıklı yapıdadır. Ancak korozyon riski nedeniyle ani basınç değişimlerinden kaçınılmalıdır.';
-        action = `${vana}'i %25 kademeli adımlarla, her adımda 4 dakika bekleyerek kapatın. Korozyon riski nedeniyle ani kapatma yapmayın.`;
-    } else {
-        reason = 'Boru yapısına göre ani vana kapatması basınç şoklarına neden olabilir.';
-        action = `${vana}'yi %20 kademeli adımlarla, her adımda 5 dakika bekleyerek kapatın. Ani kapatma yapmayın.`;
-    }
-    
-    return {
-        segment_id: segmentId,
-        risk_skoru: `%${riskScore}`,
-        anomali_ozeti: `Debi ${debi.toFixed(1)} m³/h (Ortalama: ${ortalamaDebi.toFixed(1)} m³/h, Sapma: +${debiSapma.toFixed(1)} m³/h) ve basınç ${basinc.toFixed(2)} bar (Ortalama: ${ortalamaBasinc.toFixed(2)} bar, Sapma: -${basincSapma.toFixed(1)} bar) ile debi artışı ve basınç düşüşü gözlemlenmiştir.`,
-        boru_kunyesi: `${year} İmalat Yılı / ${material} (${diameter})`,
-        gerekce: reason,
-        eylem_recetesi: action,
-        saha_talimati: `Saha teknisyeni ${locationName} konumuna yönlendirilmeli, müdahale sonrası ${vana} durum fotoğrafı mobil uygulamadan teyit olarak yüklenmelidir.`
-    };
-}
 
 /**
  * Anomali verisine göre AI destekli müdahale reçetesi üretir
@@ -230,19 +186,20 @@ Lütfen bu verilere göre JSON formatında müdahale reçetesi üret.`;
                     console.log('✓ LLM reçetesi başarıyla oluşturuldu');
                     return recipeDict;
                 } else {
-                    console.log('Uyarı: LLM yanıtı eksik alanlar içeriyor. Fallback reçete kullanılıyor.');
+                    console.log('Hata: LLM yanıtı eksik alanlar içeriyor.');
+                    return null;
                 }
             } catch (parseError) {
-                console.log('Uyarı: LLM yanıtı geçerli JSON değil. Fallback reçete kullanılıyor.');
+                console.log('Hata: LLM yanıtı geçerli JSON değil.');
+                return null;
             }
         }
     } catch (error) {
         console.error('LLM çağrısı başarısız:', error.message);
+        return null;
     }
     
-    // Fallback kural tabanlı reçete
-    console.log('Fallback reçete kullanılıyor');
-    return generateFallbackRecipe(anomalyData);
+    return null;
 }
 
 module.exports = {
