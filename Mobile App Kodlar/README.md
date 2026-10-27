@@ -1,5 +1,7 @@
 # Saha Tekniker Mobil Uygulaması - Kapsamlı Kurulum Rehberi
 
+## APK İndirme Linki:
+https://drive.google.com/file/d/1H3LeasOwtvzdOSNOH3cQJkipT7BWhqq0/view?usp=sharing
 ## 📋 İçindekiler
 
 1. [Proje Özeti](#proje-özeti)
