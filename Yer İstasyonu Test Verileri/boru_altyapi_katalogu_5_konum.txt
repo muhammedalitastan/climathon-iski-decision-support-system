@@ -1,0 +1,63 @@
+================================================================================
+İSKİ ALTYAPI VE BORU ŞEBEKE KATALOĞU (VERİ TABANI KAYDI)
+================================================================================
+
+[SEGMENT_ID: SEG-KADIKOY-MODA-88]
+Bölge / İlçe       : Kadıköy / Moda Mahallesi
+Konum / Sokak      : Caferağa Kesişimi - Mühürdar Cad.
+İmalat / Döşeme Yılı: 1988
+Boru Malzemesi     : Gevrek Döküm Demir (Cast Iron - CI)
+Boru Çapı (DN)     : 300 mm
+Nominal Basınç     : PN 10 bar
+Esneklik / Yapı    : Düşük esneklik, yüksek koç darbesi kırılganlığı
+Risk Faktörü       : Ani vana kapatmada boru patlaması ve zincirleme hasar riski yüksek.
+Saha Talimatı      : Vana müdahaleleri %20 kademeli ve minimum 15 dakika aralıklarla yapılmalıdır.
+--------------------------------------------------------------------------------
+
+[SEGMENT_ID: SEG-BESIKTAS-BEBEK-15]
+Bölge / İlçe       : Beşiktaş / Bebek Mahallesi
+Konum / Sokak      : Cevdet Paşa Caddesi No:42
+İmalat / Döşeme Yılı: 2015
+Boru Malzemesi     : Yüksek Yoğunluklu Polietilen (HD-PE100)
+Boru Çapı (DN)     : 225 mm
+Nominal Basınç     : PN 16 bar
+Esneklik / Yapı    : Yüksek esneklik, koç darbesi sönümleme kapasitesi yüksek
+Risk Faktörü       : Bağlantı conta noktalarında mikro sızıntı riski.
+Saha Talimatı      : Basınç düşürme vanası (PRV) kontrol edilmeli, boru gövdesi esnektir.
+--------------------------------------------------------------------------------
+
+[SEGMENT_ID: SEG-FATIH-BALAT-75]
+Bölge / İlçe       : Fatih / Balat Mahallesi
+Konum / Sokak      : Vodina Caddesi - Tarihi Sur İçi Hat
+İmalat / Döşeme Yılı: 1975
+Boru Malzemesi     : Pik Döküm (Grey Cast Iron)
+Boru Çapı (DN)     : 400 mm
+Nominal Basınç     : PN 6 bar
+Esneklik / Yapı    : Aşırı kırılgan, yüksek korozyon ve çökme riski
+Risk Faktörü       : Tarihi doku altı sızıntı, yol çökmesi ve bina temeli su alması.
+Saha Talimatı      : Kazı öncesi tarihi eser koruma protokolü uygulanmalı, vana %10 adımlarla kapatılmalı.
+--------------------------------------------------------------------------------
+
+[SEGMENT_ID: SEG-UMRANIYE-FINANS-22]
+Bölge / İlçe       : Ümraniye / Finans Merkezi Bölgesi
+Konum / Sokak      : Barbaros Caddesi No:18
+İmalat / Döşeme Yılı: 2022
+Boru Malzemesi     : Çelik Boru (Spiral Welded Steel - SSAW)
+Boru Çapı (DN)     : 600 mm
+Nominal Basınç     : PN 25 bar
+Esneklik / Yapı    : Yüksek mekanik dayanım, katodik korumalı
+Risk Faktörü       : Katodik koruma arızası ve dış kaplama aşınması.
+Saha Talimatı      : Otomatik SCADA kontrolü aktif. Vana kapatma süresi 5 dakika standart.
+--------------------------------------------------------------------------------
+
+[SEGMENT_ID: SEG-SARIYER-MASLAK-05]
+Bölge / İlçe       : Sarıyer / Maslak Mahallesi
+Konum / Sokak      : Büyükdere Caddesi - Plazalar Bölgesi
+İmalat / Döşeme Yılı: 2005
+Boru Malzemesi     : Duktil Döküm Demir (Ductile Iron - DI)
+Boru Çapı (DN)     : 500 mm
+Nominal Basınç     : PN 16 bar
+Esneklik / Yapı    : Orta esneklik, yüksek iç basınç dayanımı
+Risk Faktörü       : Gece tepe basınç altında kılcal conta sızdırmazlık kaybı.
+Saha Talimatı      : Basınç sabitleyici hat servise alınmalı, debi anomali takibi yapılmalı.
+================================================================================
